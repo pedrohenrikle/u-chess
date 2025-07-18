@@ -38,6 +38,21 @@ type Board struct {
 	Cells         [][]Piece
 }
 
+// HasProductOwner returns true if a ProductOwner of the given color
+// still exists somewhere on the board.
+func (b *Board) HasProductOwner(col Color) bool {
+	for y := 0; y < b.Height; y++ {
+		for x := 0; x < b.Width; x++ {
+			if po, ok := b.Cells[y][x].(*ProductOwner); ok {
+				if po.col == col {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 // Game holds state for the REPL
 type Game struct {
 	board    *Board
@@ -105,8 +120,9 @@ func NewBoard(w, h int) *Board {
 	return b
 }
 
-// Display prints the board with “.” for empty and piece symbols for occupied.
-func (b *Board) Display() {
+// Board.Display draws the board with “x” on highlighted empty squares.
+// highlights[p] == true → print “x” there.
+func (b *Board) Display(highlights map[Pos]bool) {
 	// Column headers
 	fmt.Print("   ")
 	for x := 0; x < b.Width; x++ {
@@ -118,10 +134,20 @@ func (b *Board) Display() {
 	for y := b.Height - 1; y >= 0; y-- {
 		fmt.Printf("%2d ", y+1)
 		for x := 0; x < b.Width; x++ {
-			if p := b.At(Pos{x, y}); p == nil {
-				fmt.Print(" .")
-			} else {
+			p := b.At(Pos{x, y})
+
+			switch {
+			case p != nil:
+				// occupied: use your symbol (♘, ♛, ♔ etc.)
 				fmt.Printf(" %c", Symbol(p))
+
+			case highlights[Pos{x, y}]:
+				// valid‐move target
+				fmt.Print(" x")
+
+			default:
+				// normal empty
+				fmt.Print(" .")
 			}
 		}
 		fmt.Println()
@@ -142,7 +168,7 @@ func (g *Game) printHelp() {
 func (g *Game) Run() {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("\n")
-	g.board.Display()
+	g.board.Display(nil)
 
 	fmt.Println("\nType `help` for commands.")
 
@@ -169,7 +195,7 @@ func (g *Game) Run() {
 		case "restart":
 			w, h := getDimension("width"), getDimension("height")
 			*g = *NewGame(w, h)
-			g.board.Display()
+			g.board.Display(nil)
 
 		case "select":
 			if len(parts) != 2 {
@@ -186,11 +212,20 @@ func (g *Game) Run() {
 				fmt.Println("No", g.turn, "piece at", parts[1])
 				continue
 			}
-			g.selected = &pos
+
+			// Build highlight map of valid moves
 			moves := piece.ValidMoves(pos, g.board)
-			g.board.Display()
+			hl := make(map[Pos]bool, len(moves))
+			for _, m := range moves {
+				hl[m] = true
+			}
+
+			// Draw with “x” in each valid‐move square
+			g.board.Display(hl)
+
+			// Still print the list in the terminal
 			fmt.Printf("Valid moves for %c at %s: %v\n",
-				Symbol(piece), parts[1], formatSquares(moves))
+				Symbol(piece), strings.ToUpper(parts[1]), formatSquares(moves))
 
 		case "move":
 			if len(parts) != 3 {
@@ -203,14 +238,26 @@ func (g *Game) Run() {
 				fmt.Println("Invalid squares:", parts[1], parts[2])
 				continue
 			}
+
+			// Attempt the move
 			if err := g.movePiece(from, to); err != nil {
 				fmt.Println("Move error:", err)
 				continue
 			}
-			g.turn = opposite(g.turn)
+
+			// Check if the opponent’s ProductOwner still exists
+			opponent := opposite(g.turn) // before flipping turn
+			if !g.board.HasProductOwner(opponent) {
+				g.board.Display(nil)
+				fmt.Printf("\n%s captured the Product Owner and wins!\n", g.turn)
+				os.Exit(0)
+			}
+
+			// Now flip the turn and continue
+			g.turn = opponent
 			g.selected = nil
-			g.board.Display()
-			fmt.Println(g.turn, "to move.")
+			g.board.Display(nil)
+			fmt.Println("Turn:", g.turn)
 
 		default:
 			fmt.Println("Unknown command:", cmd)

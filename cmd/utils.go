@@ -84,26 +84,6 @@ func containsPos(list []Pos, p Pos) bool {
 	return false
 }
 
-// abs returns the absolute value of x.
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-// maybeRemoveJumped checks for a single‐step jump in straight/diag.
-// If true, removes the intervening piece.
-func maybeRemoveJumped(from, to Pos, d *Developer, b *Board) {
-	dx, dy := to.X-from.X, to.Y-from.Y
-	if abs(dx) == 2 || abs(dy) == 2 {
-		mid := Pos{from.X + sign(dx), from.Y + sign(dy)}
-		if p := b.At(mid); p != nil && p.Color() != d.col {
-			b.Cells[mid.Y][mid.X] = nil
-		}
-	}
-}
-
 // movePiece enforces turn, legality, captures, and updates the board
 func (g *Game) movePiece(from, to Pos) error {
 	piece := g.board.At(from)
@@ -113,13 +93,27 @@ func (g *Game) movePiece(from, to Pos) error {
 	if piece.Color() != g.turn {
 		return fmt.Errorf("not your turn")
 	}
+
 	valid := piece.ValidMoves(from, g.board)
 	if !containsPos(valid, to) {
 		return fmt.Errorf("illegal move to %s", formatSquare(to))
 	}
+
+	// If this is the Developer, sweep and capture any enemy in the path
 	if dev, ok := piece.(*Developer); ok {
-		maybeRemoveJumped(from, to, dev, g.board)
+		dx, dy := to.X-from.X, to.Y-from.Y
+		stepX, stepY := sign(dx), sign(dy)
+		cur := Pos{from.X + stepX, from.Y + stepY}
+
+		for cur != to {
+			if p := g.board.At(cur); p != nil && p.Color() != dev.col {
+				g.board.Cells[cur.Y][cur.X] = nil // capture
+			}
+			cur = Pos{cur.X + stepX, cur.Y + stepY}
+		}
 	}
+
+	// finally, move the piece
 	g.board.Cells[to.Y][to.X] = piece
 	g.board.Cells[from.Y][from.X] = nil
 	return nil

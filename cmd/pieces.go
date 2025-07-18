@@ -6,43 +6,34 @@ func (d *Developer) Color() Color { return d.col }
 
 func (d *Developer) ValidMoves(from Pos, b *Board) []Pos {
 	var moves []Pos
-	// 8 straight & diagonal directions
-	directions := []Pos{
+
+	// the eight directions
+	dirs := []Pos{
 		{1, 0}, {0, 1}, {-1, 0}, {0, -1},
 		{1, 1}, {1, -1}, {-1, 1}, {-1, -1},
 	}
 
-	for _, dir := range directions {
-		// 1) Normal moves (1–3 squares), path must be clear
+	for _, dir := range dirs {
 		for step := 1; step <= 3; step++ {
 			tgt := Pos{from.X + dir.X*step, from.Y + dir.Y*step}
 			if !b.InBounds(tgt) {
 				break
 			}
-			if p := b.At(tgt); p != nil {
-				// can’t go past any piece if not capturing
-				if p.Color() != d.col {
-					// allow landing on enemy (simple capture)
-					moves = append(moves, tgt)
-				}
+			occupant := b.At(tgt)
+
+			// friend blocks the way entirely
+			if occupant != nil && occupant.Color() == d.col {
 				break
 			}
-			moves = append(moves, tgt)
-		}
 
-		// 2) Jump-capture: exactly 2 squares
-		//    over an enemy piece landing on empty square
-		jumpOver := Pos{from.X + dir.X, from.Y + dir.Y}
-		land := Pos{from.X + dir.X*2, from.Y + dir.Y*2}
-		if b.InBounds(land) &&
-			b.At(jumpOver) != nil &&
-			b.At(jumpOver).Color() != d.col &&
-			b.At(land) == nil {
-
-			moves = append(moves, land)
+			// only empty squares are valid landings
+			if occupant == nil {
+				moves = append(moves, tgt)
+			}
+			// if occupant is enemy, we skip adding but keep going—
+			// we’ll capture it later in movePiece.
 		}
 	}
-
 	return moves
 }
 
