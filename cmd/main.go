@@ -8,12 +8,13 @@ import (
 	"strings"
 )
 
-// Pos is a coordinate on the board
+// pos is a board coordinate
 type Pos struct{ X, Y int }
 
-// Color of a piece
+// color of a piece
 type Color int
 
+// String method returns "White" or "Black"
 func (c Color) String() string {
 	if c == White {
 		return "White"
@@ -26,39 +27,36 @@ const (
 	Black
 )
 
-// Piece is any board‐occupying unit
+// Piece represents any unit on the board
 type Piece interface {
 	Color() Color
 	ValidMoves(from Pos, board *Board) []Pos
 }
 
-// Board holds a 2D slice of Piece (nil = empty)
+// Board holds the grid of pieces
 type Board struct {
 	Width, Height int
 	Cells         [][]Piece
 }
 
-// HasProductOwner returns true if a ProductOwner of the given color
-// still exists somewhere on the board.
+// HasProductOwner checks if the given color’s product owner is still on board
 func (b *Board) HasProductOwner(col Color) bool {
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
-			if po, ok := b.Cells[y][x].(*ProductOwner); ok {
-				if po.col == col {
-					return true
-				}
+			if po, ok := b.Cells[y][x].(*ProductOwner); ok && po.col == col {
+				return true
 			}
 		}
 	}
 	return false
 }
 
-// Game holds state for the REPL
+// Game holds the current game state
 type Game struct {
 	board    *Board
 	selected *Pos
 	turn     Color
-	gameOver bool // ← new
+	gameOver bool
 }
 
 func main() {
@@ -66,15 +64,15 @@ func main() {
 	println("Welcome to Unvoid Chess")
 	println("------------------------")
 
-	width := getDimension("width")
-	height := getDimension("height")
+	width := GetDimension("width")
+	height := GetDimension("height")
 	fmt.Printf("Starting a %dx%d board...\n", width, height)
 
 	game := NewGame(width, height)
 	game.Run()
 }
 
-// NewGame creates a fresh game
+// NewGame initializes a new game
 func NewGame(w, h int) *Game {
 	return &Game{
 		board:    NewBoard(w, h),
@@ -83,8 +81,8 @@ func NewGame(w, h int) *Game {
 	}
 }
 
-// getDimension prompts the user for a value between 6 and 12.
-func getDimension(name string) int {
+// GetDimension reads an integer between 6 and 12 from stdin
+func GetDimension(name string) int {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Printf("Enter %s (6–12): ", name)
@@ -99,7 +97,7 @@ func getDimension(name string) int {
 	}
 }
 
-// NewBoard allocates the grid and places the three pieces per side.
+// NewBoard creates an empty board and places each side's pieces
 func NewBoard(w, h int) *Board {
 	cells := make([][]Piece, h)
 	for y := range cells {
@@ -107,12 +105,12 @@ func NewBoard(w, h int) *Board {
 	}
 	b := &Board{Width: w, Height: h, Cells: cells}
 
-	// White on row 0, cols 0,1,2
+	// place white pieces on bottom row
 	b.Cells[0][0] = &ProductOwner{White}
 	b.Cells[0][1] = &Developer{White}
 	b.Cells[0][2] = &Designer{White}
 
-	// Black on top row, rightmost cols
+	// place black pieces on top row
 	top := h - 1
 	b.Cells[top][w-1] = &ProductOwner{Black}
 	b.Cells[top][w-2] = &Developer{Black}
@@ -121,33 +119,29 @@ func NewBoard(w, h int) *Board {
 	return b
 }
 
-// Board.Display draws the board with “x” on highlighted empty squares.
-// highlights[p] == true → print “x” there.
+// Display prints the board, using x for highlights and . for empty houses
 func (b *Board) Display(highlights map[Pos]bool) {
-	// Column headers
+	// column headers
 	fmt.Print("   ")
 	for x := 0; x < b.Width; x++ {
 		fmt.Printf(" %c", 'A'+x)
 	}
 	fmt.Println()
 
-	// Rows top→bottom
+	// rows from top down
 	for y := b.Height - 1; y >= 0; y-- {
 		fmt.Printf("%2d ", y+1)
 		for x := 0; x < b.Width; x++ {
 			p := b.At(Pos{x, y})
-
 			switch {
 			case p != nil:
-				// occupied: use your symbol (♘, ♛, ♔ etc.)
+				// occupied cell
 				fmt.Printf(" %c", Symbol(p))
-
 			case highlights[Pos{x, y}]:
-				// valid‐move target
+				// valid move highlight
 				fmt.Print(" x")
-
 			default:
-				// normal empty
+				// empty cell
 				fmt.Print(" .")
 			}
 		}
@@ -155,8 +149,8 @@ func (b *Board) Display(highlights map[Pos]bool) {
 	}
 }
 
-// printHelp lists commands
-func (g *Game) printHelp() {
+// PrintHelp shows available commands
+func (g *Game) PrintHelp() {
 	fmt.Println(`Commands:
   help                 show this help
   exit                 quit the game
@@ -165,15 +159,16 @@ func (g *Game) printHelp() {
   move <from> <to>     move a piece (e.g. move A1 B3)`)
 }
 
-// Run starts the REPL loop
+// Run method starts the main input loop
 func (g *Game) Run() {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("\n")
-	g.board.Display(nil)
 
+	// initial draw
+	g.board.Display(nil)
 	fmt.Println("\nType `help` for commands.")
 
 	for {
+		// show turn unless game is over
 		if !g.gameOver {
 			fmt.Printf("\nTurn: %s\n", g.turn)
 		}
@@ -188,20 +183,22 @@ func (g *Game) Run() {
 
 		switch cmd {
 		case "help":
-			g.printHelp()
+			g.PrintHelp()
 
 		case "exit":
 			fmt.Println("Goodbye!")
 			os.Exit(0)
 
 		case "restart":
-			w, h := getDimension("width"), getDimension("height")
+			// start a new game with fresh dimensions
+			w, h := GetDimension("width"), GetDimension("height")
 			*g = *NewGame(w, h)
 			g.gameOver = false
 			fmt.Printf("\nTurn: %s\n", g.turn)
 			g.board.Display(nil)
 
 		case "select":
+			// choose a piece and highlight its valid moves
 			if len(parts) != 2 {
 				fmt.Println("Usage: select <square>")
 				continue
@@ -217,21 +214,18 @@ func (g *Game) Run() {
 				continue
 			}
 
-			// Build highlight map of valid moves
 			moves := piece.ValidMoves(pos, g.board)
 			hl := make(map[Pos]bool, len(moves))
 			for _, m := range moves {
 				hl[m] = true
 			}
 
-			// Draw with “x” in each valid‐move square
 			g.board.Display(hl)
-
-			// Still print the list in the terminal
 			fmt.Printf("Valid moves for %c at %s: %v\n",
 				Symbol(piece), strings.ToUpper(parts[1]), formatSquares(moves))
 
 		case "move":
+			// attempt to move a piece, with full validation and reporting
 			if len(parts) != 3 {
 				fmt.Println("Usage: move <from> <to>")
 				continue
@@ -264,52 +258,48 @@ func (g *Game) Run() {
 				continue
 			}
 
-			// --- capture detection ---
-			var capturedPieces []Piece
-
-			// simple capture for non-Developer
+			// detect captures before executing the move
+			var captured []Piece
 			if _, isDev := piece.(*Developer); !isDev {
 				if p := g.board.At(to); p != nil {
-					capturedPieces = append(capturedPieces, p)
+					captured = append(captured, p)
 				}
 			} else {
-				// Developer path-sweep capture
 				dx, dy := to.X-from.X, to.Y-from.Y
 				stepX, stepY := sign(dx), sign(dy)
 				cur := Pos{from.X + stepX, from.Y + stepY}
 				for cur != to {
 					if p := g.board.At(cur); p != nil && p.Color() != g.turn {
-						capturedPieces = append(capturedPieces, p)
+						captured = append(captured, p)
 					}
 					cur = Pos{cur.X + stepX, cur.Y + stepY}
 				}
 			}
-			// -------------------------
 
-			// execute the move (also removes any swept‐over pieces)
+			// perform the move and remove captures
 			if err := g.movePiece(from, to); err != nil {
 				fmt.Println("Move error:", err)
 				continue
 			}
 
+			// redraw board
 			g.board.Display(nil)
 
-			// --- reporting with icons ---
-			mover := Symbol(piece)
-			if len(capturedPieces) > 0 {
-				icons := make([]string, len(capturedPieces))
-				for i, cp := range capturedPieces {
+			// report move outcome
+			icon := Symbol(piece)
+			if len(captured) > 0 {
+				icons := make([]string, len(captured))
+				for i, cp := range captured {
 					icons[i] = string(Symbol(cp))
 				}
 				fmt.Printf("\nMoved %c from %s to %s. Captured %s.\n",
-					mover, fromS, toS, strings.Join(icons, ", "))
+					icon, fromS, toS, strings.Join(icons, ", "))
 			} else {
 				fmt.Printf("\nMoved %c from %s to %s.\n",
-					mover, fromS, toS)
+					icon, fromS, toS)
 			}
-			// ----------------------------------
 
-			// flip turn, redraw
+			// switch turns
 			g.turn = opposite(g.turn)
 
 		default:
