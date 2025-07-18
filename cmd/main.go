@@ -58,6 +58,7 @@ type Game struct {
 	board    *Board
 	selected *Pos
 	turn     Color
+	gameOver bool // ← new
 }
 
 func main() {
@@ -173,8 +174,9 @@ func (g *Game) Run() {
 	fmt.Println("\nType `help` for commands.")
 
 	for {
-		// Show whose turn it is:
-		fmt.Printf("\nTurn: %s\n", g.turn)
+		if !g.gameOver {
+			fmt.Printf("\nTurn: %s\n", g.turn)
+		}
 		fmt.Print("> ")
 		raw, _ := reader.ReadString('\n')
 		line := strings.TrimSpace(raw)
@@ -195,6 +197,8 @@ func (g *Game) Run() {
 		case "restart":
 			w, h := getDimension("width"), getDimension("height")
 			*g = *NewGame(w, h)
+			g.gameOver = false
+			fmt.Printf("\nTurn: %s\n", g.turn)
 			g.board.Display(nil)
 
 		case "select":
@@ -232,32 +236,81 @@ func (g *Game) Run() {
 				fmt.Println("Usage: move <from> <to>")
 				continue
 			}
-			from, ok1 := parseSquare(parts[1])
-			to, ok2 := parseSquare(parts[2])
+			fromS, toS := strings.ToUpper(parts[1]), strings.ToUpper(parts[2])
+			from, ok1 := parseSquare(fromS)
+			to, ok2 := parseSquare(toS)
 			if !ok1 || !ok2 || !g.board.InBounds(from) || !g.board.InBounds(to) {
-				fmt.Println("Invalid squares:", parts[1], parts[2])
+				fmt.Printf("Invalid Move: %s or %s is out of bounds\n", fromS, toS)
+				continue
+			}
+			if from == to {
+				fmt.Println("Invalid Move: Destination must be different from origin")
 				continue
 			}
 
-			// Attempt the move
+			piece := g.board.At(from)
+			if piece == nil {
+				fmt.Printf("Invalid Move: No piece at %s\n", fromS)
+				continue
+			}
+			if piece.Color() != g.turn {
+				fmt.Println("Invalid Move: You can't move opponent's piece")
+				continue
+			}
+
+			valid := piece.ValidMoves(from, g.board)
+			if !containsPos(valid, to) {
+				fmt.Printf("Invalid Move: %c piece can't move to %s\n", Symbol(piece), toS)
+				continue
+			}
+
+			// --- capture detection ---
+			var capturedPieces []Piece
+
+			// simple capture for non-Developer
+			if _, isDev := piece.(*Developer); !isDev {
+				if p := g.board.At(to); p != nil {
+					capturedPieces = append(capturedPieces, p)
+				}
+			} else {
+				// Developer path-sweep capture
+				dx, dy := to.X-from.X, to.Y-from.Y
+				stepX, stepY := sign(dx), sign(dy)
+				cur := Pos{from.X + stepX, from.Y + stepY}
+				for cur != to {
+					if p := g.board.At(cur); p != nil && p.Color() != g.turn {
+						capturedPieces = append(capturedPieces, p)
+					}
+					cur = Pos{cur.X + stepX, cur.Y + stepY}
+				}
+			}
+			// -------------------------
+
+			// execute the move (also removes any swept‐over pieces)
 			if err := g.movePiece(from, to); err != nil {
 				fmt.Println("Move error:", err)
 				continue
 			}
 
-			// Check if the opponent’s ProductOwner still exists
-			opponent := opposite(g.turn) // before flipping turn
-			if !g.board.HasProductOwner(opponent) {
-				g.board.Display(nil)
-				fmt.Printf("\n%s captured the Product Owner and wins!\n", g.turn)
-				os.Exit(0)
-			}
-
-			// Now flip the turn and continue
-			g.turn = opponent
-			g.selected = nil
 			g.board.Display(nil)
-			fmt.Println("Turn:", g.turn)
+
+			// --- reporting with icons ---
+			mover := Symbol(piece)
+			if len(capturedPieces) > 0 {
+				icons := make([]string, len(capturedPieces))
+				for i, cp := range capturedPieces {
+					icons[i] = string(Symbol(cp))
+				}
+				fmt.Printf("\nMoved %c from %s to %s. Captured %s.\n",
+					mover, fromS, toS, strings.Join(icons, ", "))
+			} else {
+				fmt.Printf("\nMoved %c from %s to %s.\n",
+					mover, fromS, toS)
+			}
+			// ----------------------------------
+
+			// flip turn, redraw
+			g.turn = opposite(g.turn)
 
 		default:
 			fmt.Println("Unknown command:", cmd)

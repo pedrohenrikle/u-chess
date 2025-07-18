@@ -4,4 +4,4 @@ WORKDIR /app
 COPY . .
 
 # Run the application
-CMD ["go", "run", "./cmd/main.go"]
+CMD ["go", "run", "./cmd"]
