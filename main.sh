@@ -1,1 +1,1 @@
-docker build -t candidate-test . && docker run --rm -it candidate-testa
+docker build -t candidate-test . && docker run --rm -it candidate-test

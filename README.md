@@ -78,7 +78,7 @@ Alternatively you can run the shell `main.sh`.
 `main.sh` code:
 
 ```bash
-docker build -t candidate-test . && docker run --rm -it candidate-testa
+docker build -t candidate-test . && docker run --rm -it candidate-test
 ```
 
 And if you want to make a `.tag.gz` of all the project simply run the `prepare-to-upload.sh`.
