@@ -31,9 +31,7 @@ Your project structure looks like this:
 │   └── utils.go
 ├── Dockerfile
 ├── go.mod
-├── main.sh
 ├── out/
-├── prepare-to-upload.sh
 └── README.md
 ```
 
