@@ -1,1 +1,0 @@
-npx -y @unvoidweb/repo-compress --output upload-this-file

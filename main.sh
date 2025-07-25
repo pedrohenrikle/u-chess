@@ -1,1 +1,0 @@
-docker build -t candidate-test . && docker run --rm -it candidate-test
