@@ -68,9 +68,6 @@ docker run -it uchess
 
 This will launch the game in interactive mode right in your terminal.
 
----
-
-Let me know if you'd like instructions for installing globally, compiling for 
 
 ## Commands
 
