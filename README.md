@@ -1,10 +1,8 @@
-# unvoid-chess - Terminal Chess Variant
+# u-chess - Terminal Chess Variant
 
-_unvoid-chess_ is a terminal-based chess variant written in Go, featuring original pieces and gameplay mechanics designed to challenge traditional strategy. Run directly from the command line, it offers an intuitive interface for local turn-based matches.
+_u-chess_ is a terminal-based chess variant written in Go, featuring original pieces and gameplay mechanics designed to challenge traditional strategy. Run directly from the command line, it offers an intuitive interface for local turn-based matches.
 
-It’s played on a user-defined square board and features custom units like the Product Owner, Developer, and Designer—each with unique movement rules and tactical implications.
-
-> _This project was developed as a technical test for the company Unvoid._
+It’s played on a user-defined square board and features custom units like the Product Owner, Developer, and Designer — each with unique movement rules and tactical implications.
 
 ## Features
 
@@ -51,8 +49,8 @@ go run ./cmd
 If you'd like to compile a standalone binary:
 
 ```bash
-go build -o unvoid ./cmd
-./unvoid
+go build -o uchess ./cmd
+./uchess
 ```
 
 ### Running with Docker
@@ -62,26 +60,16 @@ You can also run the game inside a container using the provided Dockerfile.
 **1. Build the Image**
 
 ```bash
-docker build -t unvoid-chess .
+docker build -t uchess .
 ```
 
 **2. Run the Container**
 
 ```bash
-docker run -it unvoid-chess
+docker run -it uchess
 ```
 
 This will launch the game in interactive mode right in your terminal.
-
-Alternatively you can run the shell `main.sh`.
-
-`main.sh` code:
-
-```bash
-docker build -t candidate-test . && docker run --rm -it candidate-test
-```
-
-And if you want to make a `.tag.gz` of all the project simply run the `prepare-to-upload.sh`.
 
 ---
 
@@ -153,6 +141,6 @@ This project was made possible with:
 To remove the binary:
 
 ```bash
-rm unvoid
+rm uchess
 ```
 
