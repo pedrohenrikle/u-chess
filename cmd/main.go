@@ -61,7 +61,7 @@ type Game struct {
 
 func main() {
 	println("------------------------")
-	println("Welcome to Unvoid Chess")
+	println("Welcome to uChess")
 	println("------------------------")
 
 	width := GetDimension("width")
