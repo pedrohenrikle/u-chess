@@ -18,7 +18,6 @@ It’s played on a user-defined square board and features custom units like the 
 ### Prerequisites
 
 - Requires Go (version 1.18 or newer)
-- You may use `make` to simplify building
 
 ## Build and Run
 
