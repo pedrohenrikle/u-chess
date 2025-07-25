@@ -1,10 +1,10 @@
 package main
 
-type Developer struct{ col Color }
+type Tower struct{ col Color }
 
-func (d *Developer) Color() Color { return d.col }
+func (d *Tower) Color() Color { return d.col }
 
-func (d *Developer) ValidMoves(from Pos, b *Board) []Pos {
+func (d *Tower) ValidMoves(from Pos, b *Board) []Pos {
 	var moves []Pos
 
 	// the eight directions
@@ -37,11 +37,11 @@ func (d *Developer) ValidMoves(from Pos, b *Board) []Pos {
 	return moves
 }
 
-type Designer struct{ col Color }
+type Knight struct{ col Color }
 
-func (d *Designer) Color() Color { return d.col }
+func (d *Knight) Color() Color { return d.col }
 
-func (d *Designer) ValidMoves(from Pos, b *Board) []Pos {
+func (d *Knight) ValidMoves(from Pos, b *Board) []Pos {
 	var moves []Pos
 	deltas := []Pos{
 		{1, 2}, {2, 1}, {2, -1}, {1, -2},
@@ -62,11 +62,11 @@ func (d *Designer) ValidMoves(from Pos, b *Board) []Pos {
 	return moves
 }
 
-type ProductOwner struct{ col Color }
+type King struct{ col Color }
 
-func (k *ProductOwner) Color() Color { return k.col }
+func (k *King) Color() Color { return k.col }
 
-func (k *ProductOwner) ValidMoves(from Pos, b *Board) []Pos {
+func (k *King) ValidMoves(from Pos, b *Board) []Pos {
 	var moves []Pos
 	for dx := -1; dx <= 1; dx++ {
 		for dy := -1; dy <= 1; dy++ {

@@ -39,11 +39,11 @@ type Board struct {
 	Cells         [][]Piece
 }
 
-// HasProductOwner checks if the given color’s product owner is still on board
-func (b *Board) HasProductOwner(col Color) bool {
+// HasKing checks if the given color’s King is still on board
+func (b *Board) HasKing(col Color) bool {
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
-			if po, ok := b.Cells[y][x].(*ProductOwner); ok && po.col == col {
+			if po, ok := b.Cells[y][x].(*King); ok && po.col == col {
 				return true
 			}
 		}
@@ -106,15 +106,15 @@ func NewBoard(w, h int) *Board {
 	b := &Board{Width: w, Height: h, Cells: cells}
 
 	// place white pieces on bottom row
-	b.Cells[0][0] = &ProductOwner{White}
-	b.Cells[0][1] = &Developer{White}
-	b.Cells[0][2] = &Designer{White}
+	b.Cells[0][0] = &King{White}
+	b.Cells[0][1] = &Tower{White}
+	b.Cells[0][2] = &Knight{White}
 
 	// place black pieces on top row
 	top := h - 1
-	b.Cells[top][w-1] = &ProductOwner{Black}
-	b.Cells[top][w-2] = &Developer{Black}
-	b.Cells[top][w-3] = &Designer{Black}
+	b.Cells[top][w-1] = &King{Black}
+	b.Cells[top][w-2] = &Tower{Black}
+	b.Cells[top][w-3] = &Knight{Black}
 
 	return b
 }
@@ -260,7 +260,7 @@ func (g *Game) Run() {
 
 			// detect captures before executing the move
 			var captured []Piece
-			if _, isDev := piece.(*Developer); !isDev {
+			if _, isDev := piece.(*Tower); !isDev {
 				if p := g.board.At(to); p != nil {
 					captured = append(captured, p)
 				}

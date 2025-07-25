@@ -2,15 +2,15 @@
 
 _u-chess_ is a terminal-based chess variant written in Go, featuring original pieces and gameplay mechanics designed to challenge traditional strategy. Run directly from the command line, it offers an intuitive interface for local turn-based matches.
 
-It’s played on a user-defined square board and features custom units like the Product Owner, Developer, and Designer — each with unique movement rules and tactical implications.
+It’s played on a user-defined square board and features custom units like the King, Tower, and Knight — each with unique movement rules and tactical implications.
 
 ## Features
 
 - Interactive Shell: Type commands like `select` and `move` to control the game in real time.
-- Custom Ruleset: Includes unique mechanics such as sweep captures for Developers and leaping Designers.
+- Custom Ruleset: Includes unique mechanics such as sweep captures for Towers and leaping Knights.
 - Highlighted Moves: Shows all legal destinations on the board using `x` markers.
 - Game State Feedback: Informs players about invalid moves, captures, and turn progression.
-- Smart Endgame Detection: Automatically declares victory when a Product Owner is taken.
+- Smart Endgame Detection: Automatically declares victory when a King is taken.
 - Clear Board Visualization: Redraws the board after each action for a clean view.
 
 ## Installation and Usage
@@ -86,28 +86,28 @@ Let me know if you'd like instructions for installing globally, compiling for
 
 The game features three custom pieces per team, each with unique behavior:
 
-### 🧑‍💼 Product Owner (♔)
+### 🧑‍💼 King (♔)
 
 - Moves exactly one square in any direction (vertical, horizontal, or diagonal), like the king in standard chess.
 - If defeated, the game ends immediately and the opponent wins.
 
-### 👩‍💻 Developer (♜)
+### 👩‍💻 Tower (♜)
 
 - Can run up to three squares in any direction, skipping over enemies but never landing on an occupied square.
 - If enemies lie between origin and destination, they are captured automatically during the move.
 
-### 🎨 Designer (♘)
+### 🎨 Knight (♘)
 
 - Moves in an L-shape: two squares in one direction and one square perpendicular, like a standard knight.
 - Can jump over any piece and land on an empty or enemy square.
 
 Each piece uses Unicode symbols for intuitive display:
 
-- `♔` = Product Owner  
-- `♜` = Developer  
-- `♘` = Designer
+- `♔` = King  
+- `♜` = Tower  
+- `♘` = Knight
 
-**Objective**: Capture the opponent's Product Owner before yours is captured!
+**Objective**: Capture the opponent's King before yours is captured!
 
 
 

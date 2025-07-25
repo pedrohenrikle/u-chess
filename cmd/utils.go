@@ -48,17 +48,17 @@ func formatSquares(list []Pos) []string {
 // Symbol returns a one‐character representation of a piece.
 func Symbol(p Piece) rune {
 	switch pt := p.(type) {
-	case *ProductOwner:
+	case *King:
 		if pt.col == White {
 			return '♔'
 		}
 		return '♚'
-	case *Developer:
+	case *Tower:
 		if pt.col == White {
 			return '♖'
 		}
 		return '♜'
-	case *Designer:
+	case *Knight:
 		if pt.col == White {
 			return '♘'
 		}
@@ -99,8 +99,8 @@ func (g *Game) movePiece(from, to Pos) error {
 		return fmt.Errorf("illegal move to %s", formatSquare(to))
 	}
 
-	// If this is the Developer, sweep and capture any enemy in the path
-	if dev, ok := piece.(*Developer); ok {
+	// If this is the Tower, sweep and capture any enemy in the path
+	if dev, ok := piece.(*Tower); ok {
 		dx, dy := to.X-from.X, to.Y-from.Y
 		stepX, stepY := sign(dx), sign(dy)
 		cur := Pos{from.X + stepX, from.Y + stepY}
